@@ -1,0 +1,70 @@
+"""Шаг 3. Эмуляция сервера.
+
+Представьте, что у нас сервер, к которому одновременно пришли запросы
+от нескольких клиентов. Обработка запроса — это ожидание ответа
+от базы данных (эмулируем через sleep).
+
+Клиент "bob" прислал тяжёлый запрос, база отвечает ему 5 секунд.
+Остальным база отвечает за полсекунды.
+
+Для вывода используйте log вместо print: она печатает строку
+с меткой времени от старта программы, например "[ 0.5s] alice: ответ отправлен".
+
+Задание 3а (синхронный сервер):
+  1. Реализуйте handle_request(client, duration): выводит
+     "<client>: запрос принят", ждёт duration секунд,
+     выводит "<client>: ответ отправлен".
+  2. Реализуйте main(): обрабатывает всех клиентов из CLIENTS по очереди.
+  Запустите. На какой секунде получает ответ "alice"? А "carol"?
+  Что видят остальные клиенты, пока обрабатывается bob?
+
+Задание 3б (асинхронный сервер):
+  Скопируйте файл в step3_server_async.py и перепишите на asyncio так,
+  чтобы запросы обрабатывались конкурентно.
+  На какой секунде теперь получает ответ "carol"? А "bob"?
+"""
+
+import time
+import asyncio
+from timer import log, print_time
+
+
+CLIENTS = [
+    ("alice", 0.5),
+    ("bob", 5.0),
+    ("carol", 0.5),
+    ("dave", 0.5),
+    ("eve", 0.5),
+]
+
+
+def handle_request(client: str, duration: float) -> None:
+    log (f"{client}: запрос принят")
+    time.sleep(duration)
+    log(f"{client}: ответ отправлен")
+
+
+
+def main_sync() -> None:
+    for client, duration in CLIENTS:
+        handle_request(client, duration)
+
+
+
+async def async_handle_request(client: str, duration: float) -> None:
+    log (f"{client}: запрос принят")
+    await asyncio.sleep(duration)
+    log(f"{client}: ответ отправлен")
+
+
+async def main_async() -> None:
+    coroutines = [async_handle_request(client, duration) for client, duration in CLIENTS]
+    await asyncio.gather(*coroutines)
+
+if __name__ == "__main__":
+    with print_time():
+        main_sync()
+
+    with print_time():
+        asyncio.run(main_async())
+
